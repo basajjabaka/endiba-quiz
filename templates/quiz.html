@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Take Quiz - Endiba Quiz{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Quiz Header -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-bold text-gray-900">Endiba Quiz</h1>
+                <div class="text-sm text-gray-500">
+                    <span id="question-counter">1</span> / {{ questions|length }}
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="progress-bar" class="progress-bar bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <!-- Question Container -->
+        <div id="questions-container" class="space-y-6">
+            {% for question in questions %}
+            <div class="question-card bg-white rounded-xl shadow-lg p-6" data-question-id="{{ question.id }}" data-question-number="{{ question.number }}" style="display: none;">
+                <div class="mb-6">
+                    <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full mb-3">
+                        Question {{ question.number }}
+                    </span>
+                    <h2 class="text-xl font-semibold text-gray-900">{{ question.body }}</h2>
+                </div>
+                
+                <div class="space-y-3">
+                    {% for option in question.options %}
+                    <div class="option-card border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition"
+                         data-option="{{ option.label }}"
+                         onclick="selectOption(this, '{{ question.id }}', '{{ option.label }}')">
+                        <div class="flex items-center">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 font-semibold mr-3 option-label">
+                                {{ option.label }}
+                            </span>
+                            <span class="text-gray-700">{{ option.text }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between mt-6">
+                    <button onclick="previousQuestion()" id="prev-btn" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Previous
+                    </button>
+                    <button id="action-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div class="bg-white rounded-xl p-8 text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-gray-600">Submitting your quiz...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const totalQuestions = {{ questions|length }};
+    let currentQuestion = 0;
+    let answers = {};
+    const questionOrder = [];
+    
+    // Initialize question order
+    document.querySelectorAll('.question-card').forEach((card, index) => {
+        questionOrder.push(card.dataset.questionId);
+    });
+    
+    // Show first question
+    function showQuestion(index) {
+        document.querySelectorAll('.question-card').forEach((card, i) => {
+            card.style.display = i === index ? 'block' : 'none';
+        });
+        
+        document.getElementById('question-counter').textContent = index + 1;
+        document.getElementById('progress-bar').style.width = ((index + 1) / totalQuestions * 100) + '%';
+        
+        // Update navigation buttons
+        const prevBtn = document.getElementById('prev-btn');
+        const actionBtn = document.getElementById('action-btn');
+
+        prevBtn.disabled = index === 0;
+
+        if (index === totalQuestions - 1) {
+            actionBtn.textContent = 'Submit';
+            actionBtn.onclick = submitQuiz;
+            actionBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            actionBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        } else {
+            actionBtn.textContent = 'Next';
+            actionBtn.onclick = nextQuestion;
+            actionBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            actionBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        }
+    }
+    
+    function selectOption(element, questionId, optionLabel) {
+        // Remove selected class from all options in this question
+        const card = element.closest('.question-card');
+        card.querySelectorAll('.option-card').forEach(opt => {
+            opt.classList.remove('selected', 'border-blue-500', 'bg-blue-50');
+            opt.classList.add('border-gray-200');
+        });
+        
+        // Add selected class to clicked option
+        element.classList.add('selected', 'border-blue-500', 'bg-blue-50');
+        element.classList.remove('border-gray-200');
+        
+        // Store answer
+        answers[questionId] = optionLabel;
+    }
+    
+    function previousQuestion() {
+        if (currentQuestion > 0) {
+            currentQuestion--;
+            showQuestion(currentQuestion);
+        }
+    }
+    
+    function nextQuestion() {
+        if (currentQuestion < totalQuestions - 1) {
+            currentQuestion++;
+            showQuestion(currentQuestion);
+        }
+    }
+    
+    function submitQuiz() {
+        // Check if all questions are answered
+        const missingQuestions = questionOrder.filter(qId => !answers[qId]);
+        
+        if (missingQuestions.length > 0) {
+            alert(`Please answer all ${missingQuestions.length} remaining question(s) before submitting.`);
+            
+            // Navigate to first missing question
+            const missingIndex = questionOrder.indexOf(missingQuestions[0]);
+            currentQuestion = missingIndex;
+            showQuestion(currentQuestion);
+            return;
+        }
+        
+        // Show loading overlay
+        document.getElementById('loading-overlay').style.display = 'flex';
+        
+        // Submit quiz
+        fetch('/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                answers: answers
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Store results in session storage for result page
+                sessionStorage.setItem('quizResults', JSON.stringify(data));
+                window.location.href = '/result';
+            } else {
+                alert('Error submitting quiz. Please try again.');
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error submitting quiz. Please try again.');
+            document.getElementById('loading-overlay').style.display = 'none';
+        });
+    }
+    
+    // Initialize
+    showQuestion(0);
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            nextQuestion();
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            previousQuestion();
+        }
+    });
+</script>
+{% endblock %}

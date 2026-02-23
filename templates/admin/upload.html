@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Questions - Endiba Quiz{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Upload Quiz Questions</h1>
+            <p class="text-gray-600 mt-1">Upload a Word document (.docx) containing quiz questions</p>
+        </div>
+        
+        <!-- Upload Form -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <form action="/admin/upload" method="POST" enctype="multipart/form-data" id="upload-form">
+                <div class="space-y-6">
+                    <!-- File Input -->
+                    <div>
+                        <label for="file" class="block text-sm font-medium text-gray-700 mb-2">Select Word Document</label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 transition cursor-pointer" id="drop-zone">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-gray-600 justify-center">
+                                    <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                                        <span>Upload a file</span>
+                                        <input id="file-upload" name="file" type="file" accept=".docx" class="sr-only" required onchange="handleFileSelect(event)">
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">DOCX only, max 10MB</p>
+                                <p id="file-name" class="text-sm text-blue-600 font-medium mt-2"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" id="submit-btn" class="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Upload and Process
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Format Guide -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Document Format Guide</h2>
+            <p class="text-gray-600 mb-4">Your Word document should follow this exact format:</p>
+            
+            <div class="bg-gray-50 rounded-lg p-4 font-mono text-sm">
+                <p class="text-purple-700">Question 1: What is the capital of France?</p>
+                <p class="text-blue-700">A. London</p>
+                <p class="text-blue-700">B. Paris</p>
+                <p class="text-blue-700">C. Berlin</p>
+                <p class="text-blue-700">D. Madrid</p>
+                <p class="text-green-700">Question 1 Answer: B</p>
+                <br>
+                <p class="text-gray-400">... continue for all questions ...</p>
+            </div>
+            
+            <div class="mt-6 space-y-3">
+                <h3 class="font-semibold text-gray-900">Important Notes:</h3>
+                <ul class="list-disc list-inside text-gray-600 space-y-2">
+                    <li>Questions must be numbered sequentially starting from 1</li>
+                    <li>Each question must have exactly 4 options (A, B, C, D)</li>
+                    <li>The answer line must match the question number</li>
+                    <li>Options must be prefixed with letter and period (A., B., etc.)</li>
+                    <li>Save your document as .docx format</li>
+                </ul>
+            </div>
+            
+            <div class="mt-6">
+                <a href="/static/uploads/sample_quiz.docx" class="inline-flex items-center text-blue-600 hover:text-blue-500">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download Sample Template
+                </a>
+            </div>
+        </div>
+        
+        <!-- Back Button -->
+        <div class="mt-6">
+            <a href="/admin" class="text-gray-600 hover:text-gray-500 flex items-center">
+                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const fileName = file.name;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            
+            document.getElementById('file-name').textContent = `${fileName} (${fileSize} MB)`;
+            document.getElementById('submit-btn').disabled = false;
+        }
+    }
+    
+    // Drag and drop functionality
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-upload');
+    
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.classList.add('border-blue-400', 'bg-blue-50');
+        });
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+        });
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        
+        if (files.length > 0) {
+            const file = files[0];
+            const fileName = file.name;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            
+            document.getElementById('file-name').textContent = `${fileName} (${fileSize} MB)`;
+            document.getElementById('submit-btn').disabled = false;
+        }
+    });
+</script>
+{% endblock %}

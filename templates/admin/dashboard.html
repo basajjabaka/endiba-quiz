@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Endiba Quiz{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Dashboard Header -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+                <p class="text-gray-600 mt-1">Quiz analytics and performance metrics</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex space-x-3">
+                <a href="/admin/upload" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                    Upload Questions
+                </a>
+                <a href="/admin/export" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    Export Data
+                </a>
+            </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Attempts</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1">{{ total_attempts }}</p>
+                    </div>
+                    <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Completion Rate</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1">{{ completion_rate }}%</p>
+                    </div>
+                    <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Avg. Time (seconds)</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1">{{ avg_time }}</p>
+                    </div>
+                    <div class="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Hourly Activity Chart -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Activity by Hour</h2>
+                <div id="hourly-chart" class="w-full h-80"></div>
+            </div>
+            
+            <!-- Score Distribution Chart -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Score Distribution</h2>
+                <div id="score-chart" class="w-full h-80"></div>
+            </div>
+        </div>
+        
+        <!-- Performance Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Most Answered Correctly -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+                    Most Answered Correctly
+                </h2>
+                {% if most_correct %}
+                <div class="space-y-4">
+                    {% for q in most_correct %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-sm font-semibold text-blue-600">Q{{ q.number }}</span>
+                            <span class="text-sm font-bold text-green-600">{{ q.percentage }}%</span>
+                        </div>
+                        <p class="text-gray-700 text-sm">{{ q.body }}</p>
+                        <div class="mt-2 flex items-center">
+                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: {{ q.percentage }}%"></div>
+                            </div>
+                            <span class="ml-2 text-xs text-gray-500">{{ q.correct_count }} correct</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No data available yet</p>
+                {% endif %}
+            </div>
+            
+            <!-- Most Answered Wrongly -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <span class="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                    Most Answered Wrongly
+                </h2>
+                {% if most_wrong %}
+                <div class="space-y-4">
+                    {% for q in most_wrong %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-sm font-semibold text-blue-600">Q{{ q.number }}</span>
+                            <span class="text-sm font-bold text-red-600">{{ q.percentage }}%</span>
+                        </div>
+                        <p class="text-gray-700 text-sm">{{ q.body }}</p>
+                        <div class="mt-2 flex items-center">
+                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full" style="width: {{ q.percentage }}%"></div>
+                            </div>
+                            <span class="ml-2 text-xs text-gray-500">{{ q.wrong_count }} wrong</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No data available yet</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Detailed Question Stats -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-6">Question-by-Question Analysis</h2>
+            
+            {% if question_stats %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Q#</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Attempts</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Correct %</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">A</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">B</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">C</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">D</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for q in question_stats %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">Q{{ q.number }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700 max-w-xs truncate" title="{{ q.body }}">{{ q.body }}</td>
+                            <td class="px-4 py-3 text-center text-sm text-gray-900">{{ q.total_attempts }}</td>
+                            <td class="px-4 py-3 text-center text-sm">
+                                <span class="px-2 py-1 rounded-full {% if q.correct_percentage >= 70 %}bg-green-100 text-green-700{% elif q.correct_percentage >= 40 %}bg-yellow-100 text-yellow-700{% else %}bg-red-100 text-red-700{% endif %}">
+                                    {{ q.correct_percentage }}%
+                                </span>
+                            </td>
+                            {% for opt in q.options %}
+                            <td class="px-4 py-3 text-center text-sm text-gray-600">
+                                <span class="{% if opt.label == q.correct_answer %}text-green-600 font-semibold{% endif %}">{{ opt.percentage }}%</span>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No questions loaded. Upload a quiz document to get started.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Clear Data Section -->
+        <div class="mt-8 bg-red-50 rounded-xl border border-red-200 p-6">
+            <h3 class="text-lg font-bold text-red-800 mb-2">Danger Zone</h3>
+            <p class="text-red-600 mb-4">This will permanently delete all quiz data including attempts, responses, and question statistics.</p>
+            <form action="/admin/clear" method="POST" onsubmit="return confirm('Are you sure you want to clear all data? This action cannot be undone.')">
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                    Clear All Data
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Render Hourly Chart -->
+<script>
+    const hourlyData = {{ hourly_chart | safe }};
+    Plotly.newPlot('hourly-chart', hourlyData.data, hourlyData.layout, {responsive: true});
+</script>
+
+<!-- Render Score Chart -->
+<script>
+    const scoreData = {{ score_chart | safe }};
+    Plotly.newPlot('score-chart', scoreData.data, scoreData.layout, {responsive: true});
+</script>
+{% endblock %}

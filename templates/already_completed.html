@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Already Completed - Endiba Quiz{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-lg w-full">
+        <div class="bg-white rounded-xl shadow-lg p-8 text-center animate-fadeIn">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Quiz Already Completed!</h1>
+            <p class="text-gray-600 mb-6">You have already taken this quiz. Each IP address can only complete the quiz once.</p>
+            
+            {% if attempt %}
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Your Previous Results</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold {% if attempt.score <= 3 %}score-red{% elif attempt.score <= 6 %}score-orange{% else %}score-green{% endif %}">
+                            {{ attempt.score }}/10
+                        </div>
+                        <div class="text-sm text-gray-500">Your Score</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-blue-600">{{ attempt.time_taken }}s</div>
+                        <div class="text-sm text-gray-500">Time Taken</div>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500">
+                    Completed on: {{ attempt.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="flex flex-col space-y-3">
+                <a href="/" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+                    Back to Home
+                </a>
+                <p class="text-sm text-gray-500">
+                    If you believe this is an error, please contact the administrator.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
